@@ -1,14 +1,7 @@
+import { API_ROUTES } from "@/constants/route.constant";
 import useSWR from "swr";
 
-interface Presentation {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  // Добавь нужные поля
-}
-
-const fetcher = async (url: string): Promise<Presentation[]> => {
+const fetcher = async (url: string): Promise<any[]> => {
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -18,9 +11,11 @@ const fetcher = async (url: string): Promise<Presentation[]> => {
   return response.json();
 };
 
+// TODO: Узнать структуру презентации и описать ее.
+
 export const usePresentations = () => {
-  const { data, error, isLoading, mutate } = useSWR<Presentation[]>(
-    "/api/presentations",
+  const { data, error, isLoading } = useSWR<any[]>(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}${API_ROUTES.presentations}`,
     fetcher
   );
 
@@ -28,6 +23,5 @@ export const usePresentations = () => {
     presentations: data,
     isLoading,
     isError: !!error,
-    mutate,
   };
 };
