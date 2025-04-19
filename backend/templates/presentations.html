@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список презентаций</title>
+    <style>
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Презентации</h1>
+    <div id="presentations"></div>
+
+    <script>
+        // Функция для получения всех презентаций
+        fetch('/api/presentations')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('presentations');
+                data.forEach(p => {
+                    const presDiv = document.createElement('div');
+                    presDiv.innerHTML = `
+                        <h3>${p.title}</h3>
+                        <p><strong>Автор:</strong> ${p.authorName || "неизвестен"}</p>
+                        <p><strong>Описание:</strong> ${p.description}</p>
+                        <p><strong>Дата:</strong> ${p.uploadDate}</p>
+                        <p><strong>Рейтинг:</strong> ${p.rating}</p>
+                        <button onclick="rate('${p.id}', 1)">👍</button>
+                        <button onclick="rate('${p.id}', -1)">👎</button>
+                        <hr>
+                    `;
+                    container.appendChild(presDiv);
+                });
+            })
+            .catch(error => console.error('Ошибка при получении презентаций:', error));
+
+        // Функция для отправки голосования
+        function rate(id, delta) {
+            fetch(`/api/presentations/${id}/rate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delta })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Обновляем рейтинг
+                alert(`Рейтинг презентации обновлен на ${data.rating}`);
+                // После успешного обновления, перезагружаем страницу для обновления данных
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Ошибка при голосовании:', error);
+                alert('Произошла ошибка при голосовании');
+            });
+        }
+    </script>
+</body>
+</html>
