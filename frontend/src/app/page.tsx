@@ -11,7 +11,7 @@ export default function Homepage() {
   if (isError) {
     return <div>Loading...</div>;
   }
-
+  console.log(presentations);
   return (
     <div className="flex flex-col w-full">
       {/* <Header /> */}

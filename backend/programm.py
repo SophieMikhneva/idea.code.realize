@@ -3,16 +3,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
 from uuid import uuid4
-import os
 
-app = Flask(__name__, static_folder=None)
+app = Flask(__name__, static_folder=None)  # corrected `name` to `__name__`
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///presentations.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-
-# Модели базы данных
+# Database Models
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String(36), primary_key=True)
@@ -71,10 +70,9 @@ class Supplement(db.Model):
     description = db.Column(db.Text)
 
 
-# Создаем базу данных при первом запуске
+# Initial data
 with app.app_context():
     db.create_all()
-    # Добавляем тестовых пользователей, если их нет
     if not User.query.first():
         db.session.add_all([
             User(
@@ -82,35 +80,48 @@ with app.app_context():
                 name="Иван Петров",
                 email="ivan@university.ru",
                 role="student",
-                group_id="CS-101",
-                department=None
+                group_id="CS-101"
             ),
             User(
                 id=str(uuid4()),
                 name="Анна Сидорова",
                 email="anna@university.ru",
                 role="teacher",
-                group_id=None,
                 department="Информатика"
             )
         ])
         db.session.commit()
 
-
-# Главная страница
-@app.route('/')
+# Main Page
+@app.route("/")
 def index():
-    # return render_template('index.html')
     return "hello world"
+    #return render_template("index.html", api_url="/api/presentations")
 
-
-# Все презентации
+# Get Presentations (with optional filters)
 @app.route('/api/presentations', methods=['GET'])
 def get_presentations():
-    presentations = Presentation.query.all()
+    title = request.args.get('title')
+    author_name = request.args.get('author')
+    subject_id = request.args.get('subject')
+    group_id = request.args.get('group')
+
+    query = Presentation.query
+
+    if title:
+        query = query.filter(Presentation.title.ilike(f"%{title}%"))
+    if author_name:
+        author = User.query.filter(User.name.ilike(f"%{author_name}%")).first()
+        if author:
+            query = query.filter(Presentation.author_id == author.id)
+    if subject_id:
+        query = query.filter(Presentation.subject_id.ilike(f"%{subject_id}%"))
+    if group_id:
+        query = query.filter(Presentation.group_id.ilike(f"%{group_id}%"))
+
+    presentations = query.all()
     result = []
     for pres in presentations:
-        # Получаем связанные данные
         author = User.query.get(pres.author_id)
         comments = Comment.query.filter_by(presentation_id=pres.id).all()
         supplements = Supplement.query.filter_by(presentation_id=pres.id).all()
@@ -129,7 +140,7 @@ def get_presentations():
                 "name": pres.file_name,
                 "type": pres.file_type
             },
-            "rating": float(pres.rating) if pres.rating else 0,
+            "rating": float(pres.rating or 0),
             "downloads": pres.downloads,
             "comments": [{
                 "id": c.id,
@@ -145,10 +156,10 @@ def get_presentations():
                 "description": s.description
             } for s in supplements]
         })
+
     return jsonify(result)
 
 
-# Добавить новую презентацию
 @app.route('/api/presentations', methods=['POST'])
 def add_presentation():
     req = request.json
@@ -172,7 +183,6 @@ def add_presentation():
     db.session.add(new_pres)
     db.session.commit()
 
-    # Возвращаем данные в том же формате, что и в оригинальной версии
     return jsonify({
         "id": new_pres.id,
         "title": new_pres.title,
@@ -193,7 +203,6 @@ def add_presentation():
     }), 201
 
 
-# Оценить презентацию
 @app.route('/api/presentations/<presentation_id>/rate', methods=['POST'])
 def rate_presentation(presentation_id):
     delta = request.json.get("delta", 1)
@@ -211,7 +220,6 @@ def rate_presentation(presentation_id):
     })
 
 
-# Добавить комментарий
 @app.route('/api/presentations/<presentation_id>/comment', methods=['POST'])
 def add_comment(presentation_id):
     req = request.json
@@ -228,7 +236,6 @@ def add_comment(presentation_id):
     db.session.add(new_comment)
     db.session.commit()
 
-    # Обновленный список комментариев
     comments = Comment.query.filter_by(presentation_id=presentation_id).all()
     return jsonify([{
         "id": c.id,
@@ -238,7 +245,6 @@ def add_comment(presentation_id):
     } for c in comments])
 
 
-# Добавить доп материал
 @app.route('/api/presentations/<presentation_id>/supplement', methods=['POST'])
 def add_supplement(presentation_id):
     req = request.json
@@ -256,7 +262,6 @@ def add_supplement(presentation_id):
     db.session.add(new_supplement)
     db.session.commit()
 
-    # Возвращаем обновленный список допматериалов
     supplements = Supplement.query.filter_by(presentation_id=presentation_id).all()
     return jsonify([{
         "id": s.id,
@@ -265,9 +270,24 @@ def add_supplement(presentation_id):
         "date": s.date.strftime('%Y-%m-%d'),
         "description": s.description
     } for s in supplements])
+
+
 @app.route('/presentations')
 def show_presentations():
-    return render_template('presentations.html')
+    title = request.args.get('title')
+    author = request.args.get('author')
+    subject = request.args.get('subject')
+    group = request.args.get('group')
+
+    api_url = "/api/presentations?"
+    if title: api_url += f"title={title}&"
+    if author: api_url += f"author={author}&"
+    if subject: api_url += f"subject={subject}&"
+    if group: api_url += f"group={group}&"
+    api_url = api_url.rstrip("&")
+
+    return render_template('presentations.html', api_url=api_url)
+
 
 @app.route('/upload')
 def upload_presentation():
