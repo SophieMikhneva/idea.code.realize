@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from datetime import datetime
 from uuid import uuid4
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///presentations.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -98,7 +100,8 @@ with app.app_context():
 # Главная страница
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # return render_template('index.html')
+    return "hello world"
 
 
 # Все презентации
