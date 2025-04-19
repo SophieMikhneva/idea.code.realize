@@ -4,22 +4,20 @@ from flask_cors import CORS
 from datetime import datetime
 from uuid import uuid4
 
-app = Flask(__name__, static_folder=None)  # редачен `name` в `__name__`
+app = Flask(__name__, static_folder=None)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///presentations.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# БД модели
+# Модели БД
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    role = db.Column(db.String(20), nullable=False)
     group_id = db.Column(db.String(20))
-    department = db.Column(db.String(100))
 
 
 class Group(db.Model):
@@ -32,7 +30,6 @@ class Subject(db.Model):
     __tablename__ = 'subjects'
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    teacher_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
 
 
 class Presentation(db.Model):
@@ -69,8 +66,7 @@ class Supplement(db.Model):
     date = db.Column(db.Date, nullable=False)
     description = db.Column(db.Text)
 
-
-# данные
+# Демо-данные
 with app.app_context():
     db.create_all()
     if not User.query.first():
@@ -79,23 +75,13 @@ with app.app_context():
                 id=str(uuid4()),
                 name="Иван Петров",
                 email="ivan@university.ru",
-                role="student",
                 group_id="CS-101"
-            ),
-            User(
-                id=str(uuid4()),
-                name="Анна Сидорова",
-                email="anna@university.ru",
-                role="teacher",
-                department="Информатика"
             )
         ])
         db.session.commit()
 
-# главная страница
 @app.route("/")
 def index():
-    #return "hello world"
     return render_template("index.html", api_url="/api/presentations")
 
 @app.route('/api/presentations', methods=['GET'])
@@ -151,14 +137,14 @@ def add_presentation():
     p = Presentation(
         id=new_id,
         title=data['title'],
-        description=data['description'] if 'description' in data else '',
+        description=data.get('description', ''),
         author_id=data['authorId'],
-        subject_id=data['subjectId'] if 'subjectId' in data else None,
-        group_id=data['groupId'] if 'groupId' in data else None,
+        subject_id=data.get('subjectId'),
+        group_id=data.get('groupId'),
         upload_date=now.date(),
         last_modified=now,
         file_name=data['fileName'],
-        file_type=data['fileType'] if 'fileType' in data else 'presentation'
+        file_type=data.get('fileType', 'presentation')
     )
     db.session.add(p)
     db.session.commit()
@@ -194,7 +180,6 @@ def rate_presentation(presentation_id):
         "rating": float(pres.rating)
     })
 
-
 @app.route('/api/presentations/<presentation_id>/comment', methods=['POST'])
 def add_comment(presentation_id):
     req = request.json
@@ -218,7 +203,6 @@ def add_comment(presentation_id):
         "text": c.text,
         "date": c.date.strftime('%Y-%m-%d')
     } for c in comments])
-
 
 @app.route('/api/presentations/<presentation_id>/supplement', methods=['POST'])
 def add_supplement(presentation_id):
@@ -246,7 +230,6 @@ def add_supplement(presentation_id):
         "description": s.description
     } for s in supplements])
 
-
 @app.route('/presentations')
 def show_presentations():
     title = request.args.get('title')
@@ -263,11 +246,9 @@ def show_presentations():
 
     return render_template('presentations.html', api_url=api_url)
 
-
 @app.route('/upload')
 def upload_presentation():
     return render_template('upload.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

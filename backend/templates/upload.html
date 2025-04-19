@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Загрузка презентации</title>
+</head>
+<body>
+    <h1>Загрузить новую презентацию</h1>
+    <form id="uploadForm">
+        <label>Заголовок: <input type="text" name="title" required></label><br>
+        <label>Описание: <textarea name="description"></textarea></label><br>
+        <label>ID автора: <input type="text" name="authorId" required></label><br>
+        <label>ID предмета: <input type="text" name="subjectId"></label><br>
+        <label>ID группы: <input type="text" name="groupId"></label><br>
+        <label>Имя файла: <input type="text" name="fileName" required></label><br>
+        <label>Тип файла: <input type="text" name="fileType" value="presentation"></label><br>
+        <button type="submit">Загрузить</button>
+    </form>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const data = new FormData(form);
+            const jsonData = {};
+            data.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            fetch('/api/presentations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Презентация добавлена!");
+                window.location.href = "/presentations";
+            });
+        });
+    </script>
+</body>
+</html>
