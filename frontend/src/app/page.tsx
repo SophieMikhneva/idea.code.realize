@@ -14,7 +14,6 @@ export default function Homepage() {
   console.log(presentations);
   return (
     <div className="flex flex-col w-full">
-      {/* <Header /> */}
       <main className="w-full p-4">
         <div className="p-4">
           <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
