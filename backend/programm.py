@@ -4,14 +4,14 @@ from flask_cors import CORS
 from datetime import datetime
 from uuid import uuid4
 
-app = Flask(__name__, static_folder=None)  # corrected `name` to `__name__`
+app = Flask(__name__, static_folder=None)  # редачен `name` в `__name__`
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///presentations.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Database Models
+# БД модели
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String(36), primary_key=True)
@@ -70,7 +70,7 @@ class Supplement(db.Model):
     description = db.Column(db.Text)
 
 
-# Initial data
+# данные
 with app.app_context():
     db.create_all()
     if not User.query.first():
@@ -92,115 +92,91 @@ with app.app_context():
         ])
         db.session.commit()
 
-# Main Page
+# главная страница
 @app.route("/")
 def index():
-    return "hello world"
+    #return "hello world"
+    return render_template("index.html", api_url="/api/presentations")
 
-# Get Presentations (with optional filters)
 @app.route('/api/presentations', methods=['GET'])
 def get_presentations():
     title = request.args.get('title')
-    author_name = request.args.get('author')
-    subject_id = request.args.get('subject')
-    group_id = request.args.get('group')
+    author = request.args.get('author')
+    subject = request.args.get('subject')
+    group = request.args.get('group')
 
-    query = Presentation.query
+    q = Presentation.query
 
     if title:
-        query = query.filter(Presentation.title.ilike(f"%{title}%"))
-    if author_name:
-        author = User.query.filter(User.name.ilike(f"%{author_name}%")).first()
-        if author:
-            query = query.filter(Presentation.author_id == author.id)
-    if subject_id:
-        query = query.filter(Presentation.subject_id.ilike(f"%{subject_id}%"))
-    if group_id:
-        query = query.filter(Presentation.group_id.ilike(f"%{group_id}%"))
+        q = q.filter(Presentation.title.ilike(f"%{title}%"))
+    if author:
+        u = User.query.filter(User.name.ilike(f"%{author}%")).first()
+        if u:
+            q = q.filter_by(author_id=u.id)
+    if subject:
+        q = q.filter(Presentation.subject_id == subject)
+    if group:
+        q = q.filter(Presentation.group_id == group)
 
-    presentations = query.all()
-    result = []
-    for pres in presentations:
-        author = User.query.get(pres.author_id)
-        comments = Comment.query.filter_by(presentation_id=pres.id).all()
-        supplements = Supplement.query.filter_by(presentation_id=pres.id).all()
+    presentations = q.all()
+    out = []
 
-        result.append({
-            "id": pres.id,
-            "title": pres.title,
-            "description": pres.description,
-            "authorId": pres.author_id,
-            "authorName": author.name if author else None,
-            "subjectId": pres.subject_id,
-            "groupId": pres.group_id,
-            "uploadDate": pres.upload_date.strftime('%Y-%m-%d'),
-            "lastModified": pres.last_modified.strftime('%Y-%m-%d'),
-            "file": {
-                "name": pres.file_name,
-                "type": pres.file_type
-            },
-            "rating": float(pres.rating or 0),
-            "downloads": pres.downloads,
-            "comments": [{
-                "id": c.id,
-                "userId": c.user_id,
-                "text": c.text,
-                "date": c.date.strftime('%Y-%m-%d')
-            } for c in comments],
-            "supplements": [{
-                "id": s.id,
-                "authorId": s.author_id,
-                "url": s.url,
-                "date": s.date.strftime('%Y-%m-%d'),
-                "description": s.description
-            } for s in supplements]
+    for p in presentations:
+        a = User.query.get(p.author_id)
+        c = Comment.query.filter_by(presentation_id=p.id).all()
+        s = Supplement.query.filter_by(presentation_id=p.id).all()
+
+        out.append({
+            "id": p.id,
+            "title": p.title,
+            "description": p.description,
+            "authorName": a.name if a else "",
+            "groupId": p.group_id,
+            "uploadDate": p.upload_date.strftime('%Y-%m-%d'),
+            "file": {"name": p.file_name, "type": p.file_type},
+            "rating": float(p.rating or 0),
+            "downloads": p.downloads,
+            "comments": [{"text": cmt.text} for cmt in c],
+            "supplements": [{"url": s.url} for s in s]
         })
 
-    return jsonify(result)
-
+    return jsonify(out)
 
 @app.route('/api/presentations', methods=['POST'])
 def add_presentation():
-    req = request.json
-    today = datetime.today()
+    data = request.json
+    now = datetime.now()
 
-    new_pres = Presentation(
-        id=str(uuid4()),
-        title=req["title"],
-        description=req.get("description", ""),
-        author_id=req["authorId"],
-        subject_id=req.get("subjectId"),
-        group_id=req.get("groupId"),
-        upload_date=today,
-        last_modified=today,
-        file_name=req["fileName"],
-        file_type=req.get("fileType", "presentation"),
-        rating=0,
-        downloads=0
+    new_id = str(uuid4())
+    p = Presentation(
+        id=new_id,
+        title=data['title'],
+        description=data['description'] if 'description' in data else '',
+        author_id=data['authorId'],
+        subject_id=data['subjectId'] if 'subjectId' in data else None,
+        group_id=data['groupId'] if 'groupId' in data else None,
+        upload_date=now.date(),
+        last_modified=now,
+        file_name=data['fileName'],
+        file_type=data['fileType'] if 'fileType' in data else 'presentation'
     )
-
-    db.session.add(new_pres)
+    db.session.add(p)
     db.session.commit()
-
     return jsonify({
-        "id": new_pres.id,
-        "title": new_pres.title,
-        "description": new_pres.description,
-        "authorId": new_pres.author_id,
-        "subjectId": new_pres.subject_id,
-        "groupId": new_pres.group_id,
-        "uploadDate": new_pres.upload_date.strftime('%Y-%m-%d'),
-        "lastModified": new_pres.last_modified.strftime('%Y-%m-%d'),
+        "id": new_id,
+        "title": p.title,
+        "authorId": p.author_id,
         "file": {
-            "name": new_pres.file_name,
-            "type": new_pres.file_type
+            "name": p.file_name,
+            "type": p.file_type
         },
+        "uploadDate": str(p.upload_date),
+        "lastModified": str(p.last_modified.date()),
         "rating": 0,
         "downloads": 0,
         "comments": [],
         "supplements": []
     }), 201
-
 
 @app.route('/api/presentations/<presentation_id>/rate', methods=['POST'])
 def rate_presentation(presentation_id):
