@@ -1,0 +1,13 @@
+services:
+  frontend:
+    container_name: hack_frontend
+    image: hack_image_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - /app/node_modules
+    env_file:
+      - frontend/.env.production
