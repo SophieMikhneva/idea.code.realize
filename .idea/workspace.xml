@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="02b8b06c-dcc2-4fdd-a336-3ffa468ce976" name="Changes" comment="обновление бот">
-      <change afterPath="$PROJECT_DIR$/backend/templates/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/templates/upload.html" afterDir="false" />
+    <list default="true" id="02b8b06c-dcc2-4fdd-a336-3ffa468ce976" name="Changes" comment="работа бд+добавление программ">
+      <change afterPath="$PROJECT_DIR$/backend/instance/blabla.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/instance/presentations.db" beforeDir="false" afterPath="$PROJECT_DIR$/backend/instance/presentations.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/programm.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/programm.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +21,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -53,10 +55,16 @@
     "Python.programm.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "back",
+    "last_opened_file_path": "D:/Users/Софья/PycharmProjects/idea.code.realize/backend/instance",
     "settings.editor.selected.configurable": "vcs.Git"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Users\Софья\PycharmProjects\idea.code.realize\backend\instance" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -105,13 +113,54 @@
       <option name="project" value="LOCAL" />
       <updated>1745081664870</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="обновление бд">
+      <option name="closed" value="true" />
+      <created>1745090303951</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1745090303951</updated>
+    </task>
+    <task id="LOCAL-00006" summary="работа бд+добавление программ">
+      <option name="closed" value="true" />
+      <created>1745097592640</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1745097592640</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="back" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="создали типо база данных&#10;не забыть модели!" />
     <MESSAGE value="добавила модели материалов, пользователя и репозитория" />
     <MESSAGE value="обновление бот" />
-    <option name="LAST_COMMIT_MESSAGE" value="обновление бот" />
+    <MESSAGE value="обновление бд" />
+    <MESSAGE value="работа бд+добавление программ" />
+    <option name="LAST_COMMIT_MESSAGE" value="работа бд+добавление программ" />
   </component>
 </project>
