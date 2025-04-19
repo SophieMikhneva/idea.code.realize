@@ -17,7 +17,13 @@ class User(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    group_id = db.Column(db.String(20))
+    role = db.Column(db.String(20), nullable=False, default='student')
+    group_id = db.Column(db.String(20), db.ForeignKey('groups.id'))
+    department = db.Column(db.String(100))
+
+    __table_args__ = (
+        db.CheckConstraint("role = 'student'", name='chk_role'),
+    )
 
 
 class Group(db.Model):
@@ -30,6 +36,13 @@ class Subject(db.Model):
     __tablename__ = 'subjects'
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+
+
+# Связующая таблица групп и предметов
+class GroupSubject(db.Model):
+    __tablename__ = 'group_subjects'
+    group_id = db.Column(db.String(20), db.ForeignKey('groups.id', ondelete='CASCADE'), primary_key=True)
+    subject_id = db.Column(db.String(36), db.ForeignKey('subjects.id', ondelete='CASCADE'), primary_key=True)
 
 
 class Presentation(db.Model):
@@ -65,20 +78,6 @@ class Supplement(db.Model):
     url = db.Column(db.Text, nullable=False)
     date = db.Column(db.Date, nullable=False)
     description = db.Column(db.Text)
-
-# Демо-данные
-with app.app_context():
-    db.create_all()
-    if not User.query.first():
-        db.session.add_all([
-            User(
-                id=str(uuid4()),
-                name="Иван Петров",
-                email="ivan@university.ru",
-                group_id="CS-101"
-            )
-        ])
-        db.session.commit()
 
 @app.route("/")
 def index():
