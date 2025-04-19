@@ -96,7 +96,6 @@ with app.app_context():
 @app.route("/")
 def index():
     return "hello world"
-    #return render_template("index.html", api_url="/api/presentations")
 
 # Get Presentations (with optional filters)
 @app.route('/api/presentations', methods=['GET'])
