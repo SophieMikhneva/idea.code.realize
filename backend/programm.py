@@ -83,49 +83,61 @@ class Supplement(db.Model):
 def index():
     return render_template("index.html", api_url="/api/presentations")
 
+@app.route('/api/subjects', methods=['GET'])
+def get_subjects():
+    subjects = Subject.query.all()
+    result = [{"id": s.id, "name": s.name} for s in subjects]
+    return jsonify(result)
+
+
 @app.route('/api/presentations', methods=['GET'])
 def get_presentations():
-    title = request.args.get('title')
-    author = request.args.get('author')
-    subject = request.args.get('subject')
-    group = request.args.get('group')
-
+    title = request.args.get('title', '').strip()
     q = Presentation.query
-
     if title:
         q = q.filter(Presentation.title.ilike(f"%{title}%"))
-    if author:
-        u = User.query.filter(User.name.ilike(f"%{author}%")).first()
-        if u:
-            q = q.filter_by(author_id=u.id)
-    if subject:
-        q = q.filter(Presentation.subject_id == subject)
-    if group:
-        q = q.filter(Presentation.group_id == group)
-
     presentations = q.all()
-    out = []
-
+    result = []
     for p in presentations:
-        a = User.query.get(p.author_id)
-        c = Comment.query.filter_by(presentation_id=p.id).all()
-        s = Supplement.query.filter_by(presentation_id=p.id).all()
-
-        out.append({
+        result.append({
             "id": p.id,
             "title": p.title,
             "description": p.description,
-            "authorName": a.name if a else "",
-            "groupId": p.group_id,
+            "subjectId": p.subject_id,
             "uploadDate": p.upload_date.strftime('%Y-%m-%d'),
-            "file": {"name": p.file_name, "type": p.file_type},
+            "file": {
+                "name": p.file_name,
+                "type": p.file_type
+            },
             "rating": float(p.rating or 0),
-            "downloads": p.downloads,
-            "comments": [{"text": cmt.text} for cmt in c],
-            "supplements": [{"url": s.url} for s in s]
+            "downloads": p.downloads
         })
 
-    return jsonify(out)
+    return jsonify(result)
+
+
+# Эндпоинт для поиска предметов
+@app.route('/api/subjects/search', methods=['GET'])
+def search_subjects():
+    query = request.args.get('query', '').strip()
+
+    # Базовый запрос
+    q = Subject.query
+
+    # Фильтр по названию предмета (если передан)
+    if query:
+        q = q.filter(Subject.name.ilike(f"%{query}%"))
+
+    # Получаем результаты
+    subjects = q.all()
+
+    # Формируем ответ
+    result = [{
+        "id": s.id,
+        "name": s.name
+    } for s in subjects]
+
+    return jsonify(result)
 
 @app.route('/api/presentations', methods=['POST'])
 def add_presentation():
