@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -9,14 +11,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useSearchHistory } from "@/stores/searchHistory.store";
 
-import { JSX } from "react";
-const projects: { url: string; name: string }[] = [
-  { url: "", name: "hello" },
-  { url: "", name: "world" },
-];
+import { Fragment, JSX } from "react";
+import { Button } from "../ui/button";
+import { useSearch } from "@/hooks/useSearch.hook";
+import { API_ROUTES } from "@/constants/route.constant";
 
 const MainSidebar = (): JSX.Element => {
+  const { history, clearHistory } = useSearchHistory();
+  const { setQuery } = useSearch<string[]>({
+    endpoint: `${process.env.NEXT_PUBLIC_BACKEND_URL}${API_ROUTES.search}`,
+    debounceDelay: 1000,
+    minQueryLength: 2,
+    fetcher: async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Search failed");
+      return res.json();
+    },
+  });
+
   return (
     <Sidebar>
       <SidebarHeader />
@@ -24,15 +38,22 @@ const MainSidebar = (): JSX.Element => {
         <SidebarGroup>
           <SidebarGroupLabel>Недавние</SidebarGroupLabel>
           <SidebarMenu>
-            {projects.map((project) => (
-              <SidebarMenuItem key={project.name}>
-                <SidebarMenuButton asChild>
-                  <a href={project.url}>
-                    <span>{project.name}</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {history.length ? (
+              <>
+                {history.map((item) => (
+                  <SidebarMenuItem
+                    key={item.timestamp}
+                    className="px-2"
+                    onClick={() => setQuery(item.query)}
+                  >
+                    <SidebarMenuButton>{item.query}</SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                <Button onClick={() => clearHistory()}>Очистить</Button>
+              </>
+            ) : (
+              <p className="leading-7 px-2">Здесь появятся посление запросы</p>
+            )}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup />

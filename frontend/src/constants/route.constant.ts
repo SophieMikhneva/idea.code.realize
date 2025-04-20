@@ -4,6 +4,6 @@ export const ROUTES = {
 } as const;
 
 export const API_ROUTES = {
-  presentations: "/api/presentations",
-  search: "/api/search",
+  presentations: "/presentations",
+  search: "/search",
 } as const;

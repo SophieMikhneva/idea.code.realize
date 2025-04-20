@@ -1,10 +1,12 @@
+import { useSearchHistory } from "@/stores/searchHistory.store";
 import { useState, useEffect, useCallback } from "react";
 import useSWR, { Key } from "swr";
 import { useDebounce } from "use-debounce";
 
+import { useSearchStore } from "@/stores/search.store";
+
 interface UseSearchProps<T> {
   endpoint: string;
-  initialQuery?: string;
   fetcher: (url: string) => Promise<T>;
   debounceDelay?: number;
   minQueryLength?: number;
@@ -12,13 +14,14 @@ interface UseSearchProps<T> {
 
 export function useSearch<T>({
   endpoint,
-  initialQuery = "",
   fetcher,
   debounceDelay = 300,
   minQueryLength = 1,
 }: UseSearchProps<T>) {
-  const [query, setQuery] = useState(initialQuery);
-  const [debouncedQuery] = useDebounce(query, debounceDelay);
+  const { searchQuery, setSearchQuery } = useSearchStore();
+  const { addQuery } = useSearchHistory();
+  // const [query, setQuery] = useState(initialQuery);
+  const [debouncedQuery] = useDebounce(searchQuery, debounceDelay);
   const [shouldFetch, setShouldFetch] = useState(false);
 
   useEffect(() => {
@@ -30,10 +33,11 @@ export function useSearch<T>({
   }, [debouncedQuery, minQueryLength]);
 
   const handleManualSearch = useCallback(() => {
-    if (query.trim().length >= minQueryLength) {
+    if (searchQuery.trim().length >= minQueryLength) {
       setShouldFetch(true);
+      addQuery(searchQuery.trim());
     }
-  }, [query, minQueryLength]);
+  }, [searchQuery, minQueryLength, addQuery]);
 
   const swrKey: Key =
     shouldFetch && debouncedQuery.trim()
@@ -52,8 +56,8 @@ export function useSearch<T>({
   };
 
   return {
-    query,
-    setQuery,
+    query: searchQuery,
+    setQuery: setSearchQuery,
     debouncedQuery,
     results: data,
     isLoading: isLoading || isValidating,
